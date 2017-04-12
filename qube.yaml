@@ -1,0 +1,51 @@
+id: 6a28a48b-884a-4c91-9abb-ed868322fcbc
+name: audioservice
+apptype: api
+language: python
+toolchain:
+  id: 58ed21e79839e20021c7ca39
+  name: Qubeship-Python-Toolchain
+opinion:
+  id: 58dee5e3e2a801000e8cb43b
+  name: build_bake_test_deployment:v0.1
+endpoint:
+  id: 58ed21e899fd82000b7230e5
+  name: Qubeship Sandbox Cluster
+  type: target
+pipeline: build_bake_test_deployment:v0.1
+security:
+  keys_loc: "conf/"
+notification:
+  type: slack
+  domain: 
+  channel: qubeship
+build:
+  skip: false
+  image:
+    name: python:3-onbuild
+    onbuild:
+      - pip install tox wheel && pip list && tox && python setup.py bdist_wheel
+  publish_artifact: dist/
+  lint: true
+bake:
+  skip: false
+  strategy: docker
+  script: Dockerfile
+  repositories:
+    - name: google
+      prefix: gcr.io/qubeship-partners
+      type: gcr
+test:
+  skip: true
+  functional:
+    provider: qubeship-sg
+deployment:
+  skip: false
+  continuous_deployment: true
+  service_name: audioservice
+  environments:
+    prod:
+      - type: qubeship_managed
+        id: 58ed21e899fd82000b7230e5
+        template_id: qube_external_app_v1
+        srcRepo: google
